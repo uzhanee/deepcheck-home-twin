@@ -1,0 +1,1364 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DeepCheck | 3D 공간 모니터링</title>
+
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+    :root {
+      color-scheme: light;
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #eef1f7;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%; 
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: #eef1f7;
+    }
+
+    body {
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    #viewer,
+    #viewer canvas {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #viewer { z-index: 0; }
+
+    .ui-viewport {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .dashboard {
+      position: relative;
+      width: min(100vw, 177.777778vh);
+      height: min(100vh, 56.25vw);
+      overflow: hidden;
+      container-type: inline-size;
+      flex: none;
+    }
+
+    .glass-card {
+      position: absolute;
+      overflow: hidden;
+      border: .0372cqw solid #e5ebf5;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 .5208cqw 1.8229cqw rgba(236, 236, 236, .94);
+      backdrop-filter: blur(.625cqw);
+      -webkit-backdrop-filter: blur(.625cqw);
+    }
+
+    .logo {
+      position: absolute;
+      top: 3.1481%;
+      left: 2.5%;
+      width: 6.9792%;
+      height: 3.3333%;
+      object-fit: contain;
+    }
+
+    .mode-toggle {
+      position: absolute;
+      top: 8.1481%;
+      left: 2.2917%;
+      width: 20%;
+      height: 5.7407%;
+      display: grid;
+      grid-template-columns: 183fr 189fr;
+      align-items: center;
+      padding: .3125cqw;
+      border-radius: 1.6146cqw;
+      background: #e6e9ee;
+      color: #667589;
+      font-size: .8333cqw;
+      font-weight: 500;
+      line-height: 1;
+      text-align: center;
+      pointer-events: auto;
+    }
+
+    .mode-option {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 1.3021cqw;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .mode-toggle .active {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      border-radius: 1.3021cqw;
+      background: #fff;
+      color: #1a2433;
+      box-shadow: 0 .0521cqw .1042cqw rgba(0, 0, 0, .05);
+    }
+
+    .location-tooltip {
+      position: absolute;
+      top: 40.8333%;
+      left: 33.4375%;
+      width: 10.4167%;
+      height: 6.7824%;
+      padding: .7292cqw 1.0417cqw;
+      border-radius: 1.1458cqw;
+      background: #fff;
+      box-shadow: 0 .2083cqw .625cqw rgba(25, 31, 40, .08),
+                  0 .625cqw 1.6667cqw rgba(25, 31, 40, .16);
+    }
+
+
+    .location-tooltip .eyebrow {
+      margin-bottom: .3646cqw;
+      color: #0065ef;
+      font-size: .7292cqw;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .location-tooltip strong {
+      display: block;
+      color: #0f172a;
+      font-size: .8333cqw;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .location-marker {
+      position: absolute;
+      top: 49.537%;
+      left: 36.5625%;
+      width: 1.25%;
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border: .1042cqw solid #fff;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2681ff 0%, #0066ff 63%, #0557c7 100%);
+      box-shadow: 0 0 .625cqw rgba(0, 102, 255, .45);
+    }
+
+    .profile-card {
+      top: 71.4447%;
+      left: 2.2917%;
+      width: 22.5%;
+      height: 24.2034%;
+      border-radius: 1.2203cqw;
+    }
+
+    .profile-photo {
+      position: absolute;
+      top: 11.2%;
+      left: 6.78%;
+      width: 19.32%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: 0 .0572cqw .1144cqw rgba(0, 0, 0, .05);
+    }
+
+    .profile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+    }
+
+    .profile-info {
+      position: absolute;
+      top: 13.9%;
+      left: 32.1759%;
+      right: 5%;
+      display: flex;
+      align-items: baseline;
+      gap: .5208cqw;
+      white-space: nowrap;
+    }
+
+    .profile-name {
+      color: #0f172a;
+      font-size: 1.25cqw;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+
+    .profile-meta {
+      color: #334155;
+      font-size: .8333cqw;
+      font-weight: 500;
+    }
+
+    .person-select {
+      position: absolute;
+      top: 28.669%;
+      left: 31.547%;
+      width: 31.141%;
+      height: 14.458%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 .625cqw;
+      border: .0381cqw solid #d5e3fc;
+      border-radius: .4386cqw;
+      color: #1a2433;
+      font-size: .625cqw;
+      font-weight: 500;
+    }
+
+    .chevron {
+      width: .5208cqw;
+      height: .5208cqw;
+      border-right: .0781cqw solid #94a3b8;
+      border-bottom: .0781cqw solid #94a3b8;
+      transform: translateY(-.1042cqw) rotate(45deg);
+    }
+
+    .last-measurement {
+      position: absolute;
+      top: 57.071%;
+      left: 6.441%;
+      width: 87.119%;
+      height: 32.146%;
+      display: flex;
+      align-items: center;
+      gap: 1.0938cqw;
+      padding: 0 .9375cqw;
+      border: .0763cqw solid #edf3ff;
+      border-radius: .7267cqw;
+    }
+
+    .check-circle {
+      display: grid;
+      width: 2.0396cqw;
+      aspect-ratio: 1;
+      place-items: center;
+      flex: none;
+      border-radius: 50%;
+      background: #e6f0fe;
+      color: #0065ef;
+    }
+
+    .check-circle svg { width: 1.0417cqw; }
+
+    .measure-label {
+      margin-bottom: .3646cqw;
+      color: #a7b4ca;
+      font-size: .7292cqw;
+      font-weight: 500;
+    }
+
+    .measure-value {
+      color: #1a2433;
+      font-size: .8333cqw;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .dashboard-card {
+      left: 72.65625%;
+      width: 24.84375%;
+      border-radius: 1.1905cqw;
+    }
+
+    .recent-card {
+      top: 14.1667%;
+      height: 23.6111%;
+    }
+
+    .card-heading {
+      position: absolute;
+      top: 2.8cqw;
+      left: 1.3542cqw;
+      margin: 0;
+      font-size: .8333cqw;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -.02em;
+    }
+
+    .recent-card .card-heading { top: 1.6667cqw; }
+
+    .measurement-date {
+      position: absolute;
+      top: 1.6667cqw;
+      right: 1.3542cqw;
+      color: #94a3b8;
+      font-size: .625cqw;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .health-grid {
+      position: absolute;
+      top: 3.2998cqw;
+      left: 1.3729cqw;
+      right: 0;
+      display: flex;
+      gap: .617cqw;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+
+.health-grid::after {
+  content: "";
+  flex: 0 0 0.5cqw;
+}
+
+    .health-grid::-webkit-scrollbar { display: none; }
+
+    .metric-card {
+      position: relative;
+      width: 8.274cqw;
+      height: 8.91cqw;
+      flex: 0 0 8.274cqw;
+      padding: 1.15cqw 1.08cqw 0;
+      border: .0372cqw solid rgba(226, 232, 240, .8);
+      border-radius: .8743cqw;
+      background: rgba(255, 255, 255, .38);
+      box-shadow: 0 .0558cqw .1116cqw rgba(0, 0, 0, .05);
+    }
+
+    .metric-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #526071;
+      font-size: .7292cqw;
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.09cqw;
+      height: 1.1607cqw;
+      padding: 0 .45cqw;
+      border-radius: .2232cqw;
+      background: #edf3ff;
+      color: #0065ef;
+      font-size: .625cqw;
+      font-weight: 700;
+    }
+
+    .badge.warning {
+      background: #fef5e7;
+      color: #d97706;
+    }
+
+    .badge.danger {
+      background: #fee8e8;
+      color: #ff3434;
+    }
+
+    .metric-value {
+      margin-top: 1.26cqw;
+      color: #0f172a;
+      font-size: 1.25cqw;
+      font-weight: 700;
+      letter-spacing: -.035em;
+      white-space: nowrap;
+    }
+
+    .metric-value small {
+      margin-left: .26cqw;
+      color: #64748b;
+      font-size: .7292cqw;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .metric-foot {
+      position: absolute;
+      right: 1.08cqw;
+      bottom: 1.05cqw;
+      left: 1.08cqw;
+      padding-top: .78cqw;
+      border-top: .0558cqw solid #f1f5f9;
+      color: #64748b;
+      font-size: .6771cqw;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .metric-foot b { color: #0065ef; }
+    .metric-foot b.danger { color: #ef4444; }
+
+    .recent-scroll-button {
+      position: absolute;
+      z-index: 3;
+      top: 6.9271cqw;
+      display: grid;
+      width: 1.6667cqw;
+      aspect-ratio: 1;
+      place-items: center;
+      padding: 0;
+      border: .0372cqw solid rgba(226, 232, 240, .9);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .96);
+      color: #1c2237;
+      box-shadow: 0 .5208cqw 1.8229cqw rgba(236, 236, 236, .94);
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .recent-scroll-button.prev { left: .4167cqw; }
+    .recent-scroll-button.next { right: .4167cqw; }
+
+    .recent-scroll-button svg {
+      width: .625cqw;
+      height: .625cqw;
+    }
+
+    .recent-scroll-button:disabled {
+      opacity: .38;
+      cursor: default;
+    }
+
+    .summary-card {
+      top: 39.6296%;
+      height: 22.0635%;
+    }
+
+    .summary-card .card-heading { top: 1.6667cqw; }
+
+    .summary-stats {
+      position: absolute;
+      top: 3.48cqw;
+      left: 1.3542cqw;
+      right: 1.3542cqw;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .summary-stat {
+      min-height: 3.44cqw;
+    }
+
+    .summary-stat + .summary-stat {
+      padding-left: 1.3542cqw;
+      border-left: .0521cqw solid rgba(226, 232, 240, .8);
+    }
+
+    .summary-label {
+      margin-bottom: .78cqw;
+      color: #526071;
+      font-size: .6771cqw;
+      font-weight: 500;
+    }
+
+    .summary-value {
+      color: #0f172a;
+      font-size: 1.25cqw;
+      font-weight: 700;
+      letter-spacing: -.035em;
+      white-space: nowrap;
+    }
+
+    .activity-bar {
+      position: absolute;
+      top: 8.2738cqw;
+      left: 1.3766cqw;
+      width: 22.0908cqw;
+      height: .9896cqw;
+      display: flex;
+      overflow: hidden;
+      border-radius: .4948cqw;
+      background: #eef1f7;
+    }
+
+    .activity-bar span:nth-child(1) { width: 37.5%; background: #0065ef; }
+    .activity-bar span:nth-child(2) { width: 25.47%; background: rgba(0, 101, 239, .35); }
+    .activity-bar span:nth-child(3) { width: 19.34%; background: #d5e3fc; }
+    .activity-bar span:nth-child(4) { flex: 1; }
+
+    .activity-legend {
+      position: absolute;
+      top: 10.2529cqw;
+      left: 1.3766cqw;
+      width: 22.0908cqw;
+      display: flex;
+      justify-content: space-between;
+      color: #64748b;
+      font-size: .625cqw;
+      font-weight: 500;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: .4167cqw;
+      white-space: nowrap;
+    }
+
+    .legend-dot {
+      width: .5208cqw;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #eef1f7;
+    }
+
+    .legend-item:nth-child(1) .legend-dot { background: #0065ef; }
+    .legend-item:nth-child(2) .legend-dot { background: rgba(0, 101, 239, .35); }
+    .legend-item:nth-child(3) .legend-dot { background: #d5e3fc; }
+
+    .timeline-card {
+      top: 63.5444%;
+      height: 32.3413%;
+    }
+
+    .timeline-card .card-heading { top: 1.6667cqw; }
+
+    .timeline-line {
+      position: absolute;
+      top: 4.7448cqw;
+      bottom: 2.6042cqw;
+      left: 3.823cqw;
+      width: .0521cqw;
+      background: #edf3ff;
+    }
+
+    .timeline-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2.9167cqw;
+    }
+
+    .timeline-row.current { top: 3.2738cqw; }
+    .timeline-row.current + .timeline-row { top: 6.8155cqw; }
+    .timeline-row.current + .timeline-row + .timeline-row { top: 10.3571cqw; }
+    .timeline-row.current + .timeline-row + .timeline-row + .timeline-row { top: 13.8988cqw; }
+
+    .timeline-time {
+      position: absolute;
+      top: 50%;
+      left: 1.3542cqw;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: .625cqw;
+      font-weight: 500;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      top: 50%;
+      left: 3.5948cqw;
+      width: .5208cqw;
+      aspect-ratio: 1;
+      transform: translateY(-50%);
+      border-radius: 50%;
+      background: #eef1f7;
+    }
+
+    .timeline-row.current .timeline-dot {
+      background: #0065ef;
+      box-shadow: 0 0 0 .2083cqw #edf3ff;
+    }
+
+    .timeline-event {
+      position: absolute;
+      top: 0;
+      left: 5.96cqw;
+      width: 17.0016cqw;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: .7292cqw;
+      padding: 0 .7292cqw;
+      border-radius: .8333cqw;
+      background: rgba(248, 250, 252, .8);
+      color: #1a2433;
+      font-size: .6771cqw;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .timeline-row.current .timeline-event {
+      width: 17.0016cqw;
+      background: #edf3ff;
+    }
+
+    .event-icon {
+      display: grid;
+      width: 1.6667cqw;
+      aspect-ratio: 1;
+      place-items: center;
+      flex: none;
+      border: .026cqw solid rgba(213, 227, 252, .6);
+      border-radius: 50%;
+      background: #eff6ff;
+      color: #0065ef;
+    }
+
+    .event-icon svg {
+      width: .9375cqw;
+      height: .9375cqw;
+    }
+
+    .event-icon.heart {
+      border-color: rgba(255, 228, 230, .6);
+      background: #fff1f2;
+      color: #ff5938;
+    }
+
+    .now-pill {
+      margin-left: auto;
+      padding: .24cqw .52cqw;
+      border-radius: .5469cqw;
+      background: #0065ef;
+      color: #fff;
+      font-size: .5208cqw;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .view-controls {
+      position: absolute;
+      top: 74.0741%;
+      left: 68.6458%;
+      width: 2.8125%;
+      color: #1c2237;
+      pointer-events: auto;
+    }
+
+    .view-controls.is-hidden { display: none; }
+    .view-controls.is-transitioning { pointer-events: none; }
+
+    .control-button,
+    .zoom-control {
+      width: 100%;
+      border: .026cqw solid rgba(226, 232, 240, .8);
+      background: #fff;
+      box-shadow: 0 .5208cqw 1.8229cqw rgba(236, 236, 236, .94);
+    }
+
+    .control-button {
+      display: grid;
+      aspect-ratio: 1;
+      place-items: center;
+      padding: 0;
+      border-radius: .8333cqw;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .control-button svg { width: 1.1458cqw; height: 1.1458cqw; }
+
+    .zoom-control {
+      height: 5.5729cqw;
+      margin-top: .4688cqw;
+      overflow: hidden;
+      border-radius: .8333cqw;
+    }
+
+    .zoom-part {
+      display: grid;
+      width: 100%;
+      height: 50%;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .zoom-part + .zoom-part { border-top: .0521cqw solid #f1f5f9; }
+    .zoom-part svg { width: 1.0417cqw; height: 1.0417cqw; }
+
+    .reset-button { margin-top: .4688cqw; }
+
+    #status {
+      position: fixed;
+      z-index: 4;
+      bottom: 1rem;
+      left: 50%;
+      max-width: calc(100vw - 2rem);
+      transform: translateX(-50%);
+      padding: .65rem .9rem;
+      border: 1px solid #d5e3fc;
+      border-radius: .65rem;
+      background: rgba(255, 255, 255, .92);
+      color: #334155;
+      font-size: .8125rem;
+      box-shadow: 0 .5rem 1.5rem rgba(15, 23, 42, .1);
+    }
+
+    #status:empty { display: none; }
+  </style>
+</head>
+
+<body>
+  <div id="viewer"></div>
+
+  <div class="ui-viewport">
+    <main class="dashboard">
+      <img class="logo" src="./deepcheck-logo.png" alt="" />
+
+      <div class="mode-toggle">
+        <button class="mode-option active" type="button" data-view="3d" aria-pressed="true">3D 공간</button>
+        <button class="mode-option" type="button" data-view="floorplan" aria-pressed="false">평면도</button>
+      </div>
+
+      <div class="location-tooltip">
+        <div class="eyebrow">현재 위치</div>
+        <strong>거실 · 활동 감지</strong>
+      </div>
+      <div class="location-marker"></div>
+
+      <section class="glass-card profile-card">
+        <div class="profile-photo">
+          <img src="./deepcheck-profile.jpg" alt="" />
+        </div>
+        <div class="profile-info">
+          <span class="profile-name">김영희 님</span>
+          <span class="profile-meta">78세 · 여성</span>
+        </div>
+        <div class="person-select">
+          <span>다른 피보호자 보기</span>
+          <span class="chevron"></span>
+        </div>
+        <div class="last-measurement">
+          <span class="check-circle">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <div>
+            <div class="measure-label">마지막 측정 시각</div>
+            <div class="measure-value">2026년 10월 29일 (금) 오후 21:30</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass-card dashboard-card recent-card">
+        <h2 class="card-heading">최근 측정결과</h2>
+        <div class="measurement-date">10월 29일 (금) 오후 10:10 기준</div>
+        <div class="health-grid">
+          <article class="metric-card">
+            <div class="metric-head"><span>심박수</span><span class="badge">정상</span></div>
+            <div class="metric-value">72<small>회/분</small></div>
+            <div class="metric-foot">이전 대비 <b>-4</b></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head"><span>혈압</span><span class="badge">정상</span></div>
+            <div class="metric-value">120/80</div>
+            <div class="metric-foot">수축기 -6 · 이완기 0</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head"><span>피로도</span><span class="badge warning">주의</span></div>
+            <div class="metric-value">35<small>/100점</small></div>
+            <div class="metric-foot">이전 대비 <b>-7</b></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head"><span>스트레스</span><span class="badge danger">주의</span></div>
+            <div class="metric-value">50<small>/100점</small></div>
+            <div class="metric-foot">이전 대비 <b class="danger">+2</b></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head"><span>회복력</span><span class="badge">정상</span></div>
+            <div class="metric-value">75<small>/100점</small></div>
+            <div class="metric-foot">이전 대비 <b>+5</b></div>
+          </article>
+        </div>
+        <button class="recent-scroll-button prev" type="button" aria-label="이전 측정 결과">
+          <svg viewBox="0 0 16 16" fill="none"><path d="m10 3.5-4.5 4.5 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="recent-scroll-button next" type="button" aria-label="다음 측정 결과">
+          <svg viewBox="0 0 16 16" fill="none"><path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </section>
+
+      <section class="glass-card dashboard-card summary-card">
+        <h2 class="card-heading">활동 요약</h2>
+        <div class="summary-stats">
+          <div class="summary-stat">
+            <div class="summary-label">총 활동 시간</div>
+            <div class="summary-value">3시간 40분</div>
+          </div>
+          <div class="summary-stat">
+            <div class="summary-label">주요 활동 공간</div>
+            <div class="summary-value">거실(1시간 20분)</div>
+          </div>
+        </div>
+        <div class="activity-bar"><span></span><span></span><span></span><span></span></div>
+        <div class="activity-legend">
+          <span class="legend-item"><i class="legend-dot"></i>거실 37%</span>
+          <span class="legend-item"><i class="legend-dot"></i>침실 27%</span>
+          <span class="legend-item"><i class="legend-dot"></i>주방 18%</span>
+          <span class="legend-item"><i class="legend-dot"></i>기타 18%</span>
+        </div>
+      </section>
+
+      <section class="glass-card dashboard-card timeline-card">
+        <h2 class="card-heading">활동 기록</h2>
+        <div class="timeline-line"></div>
+
+        <div class="timeline-row current">
+          <time class="timeline-time">10:10</time>
+          <i class="timeline-dot"></i>
+          <div class="timeline-event">
+            <span class="event-icon">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="4" r="2" fill="currentColor"/><path d="m10.5 7-2 5h2l-1 7M13 7l1.5 4 3 2M12 12v7M8.5 9l-2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span>거실 · 활동 감지</span>
+            <span class="now-pill">현재</span>
+          </div>
+        </div>
+
+        <div class="timeline-row">
+          <time class="timeline-time">09:12</time>
+          <i class="timeline-dot"></i>
+          <div class="timeline-event">
+            <span class="event-icon heart">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.6c0 5-8.8 10-8.8 10s-8.8-5-8.8-10a4.6 4.6 0 0 1 8.8-1.9 4.6 4.6 0 0 1 8.8 1.9Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span>건강 측정 완료</span>
+          </div>
+        </div>
+
+        <div class="timeline-row">
+          <time class="timeline-time">08:47</time>
+          <i class="timeline-dot"></i>
+          <div class="timeline-event">
+            <span class="event-icon">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="4" r="2" fill="currentColor"/><path d="m10.5 7-2 5h2l-1 7M13 7l1.5 4 3 2M12 12v7M8.5 9l-2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span>주방 · 활동 감지</span>
+          </div>
+        </div>
+
+        <div class="timeline-row">
+          <time class="timeline-time">07:30</time>
+          <i class="timeline-dot"></i>
+          <div class="timeline-event">
+            <span class="event-icon">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7v12M4 10h14a2 2 0 0 1 2 2v7M4 16h16M7 10V7h4a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span>침실 · 기상</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="view-controls">
+        <button class="control-button home-button" type="button" aria-label="초기 중심으로 이동">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="zoom-control">
+          <button class="zoom-part zoom-in-button" type="button" aria-label="확대">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button class="zoom-part zoom-out-button" type="button" aria-label="축소">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <button class="control-button reset-button" type="button" aria-label="초기 3D 시점으로 복귀">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5.4 8.4A8 8 0 1 1 4 13M4 5v5h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <div id="status"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // ==========================================
+    // 1. 기본 환경 설정
+    // ==========================================
+
+    const container = document.getElementById('viewer');
+    const status = document.getElementById('status');
+    const dashboard = document.querySelector('.dashboard');
+    const locationMarker = document.querySelector('.location-marker');
+    const locationTooltip = document.querySelector('.location-tooltip');
+    const viewControls = document.querySelector('.view-controls');
+    const homeViewButton = document.querySelector('.home-button');
+    const zoomInButton = document.querySelector('.zoom-in-button');
+    const zoomOutButton = document.querySelector('.zoom-out-button');
+    const resetViewButton = document.querySelector('.reset-button');
+    const modeOptions = document.querySelectorAll('.mode-option');
+    const healthGrid = document.querySelector('.health-grid');
+    const healthPrevButton = document.querySelector('.recent-scroll-button.prev');
+    const healthNextButton = document.querySelector('.recent-scroll-button.next');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#f5f5f5');
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      10000
+    );
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.5;
+
+    container.appendChild(renderer.domElement);
+
+
+    // ==========================================
+    // 2. 조명 설정
+    // ==========================================
+
+    scene.add(
+      new THREE.HemisphereLight(
+        0xffffff,
+        0xb7bed1,
+        2.1
+      )
+    );
+
+    const sun = new THREE.DirectionalLight(
+      0xffffff,
+      2.4
+    );
+
+    sun.position.set(10, 25, 15);
+    scene.add(sun);
+
+
+    // ==========================================
+    // 3. 마우스 컨트롤 설정
+    // ==========================================
+
+    const controls = new OrbitControls(
+      camera,
+      renderer.domElement
+    );
+
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    controls.enableRotate = true;
+    controls.enableZoom = true;
+    controls.enablePan = true;
+
+    // 왼쪽 드래그: 회전
+    // 가운데 휠 드래그: 이동
+    // 오른쪽 드래그: 이동
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.PAN,
+      RIGHT: THREE.MOUSE.PAN
+    };
+
+    const initialControlState = {
+      maxPolarAngle: controls.maxPolarAngle,
+      enableDamping: controls.enableDamping,
+      enableRotate: controls.enableRotate,
+      enableZoom: controls.enableZoom,
+      enablePan: controls.enablePan,
+      mouseButtons: { ...controls.mouseButtons },
+      touches: { ...controls.touches }
+    };
+
+
+    // ==========================================
+    // 4. 초기 카메라 좌표
+    // ==========================================
+
+    // 콘솔에서 추출한 카메라 위치
+    const initialCameraPosition = new THREE.Vector3(
+  -261.68037188410324,
+  351.92986041744075,
+  460.59514515700755
+    );
+
+    // 콘솔에서 추출한 카메라 중심점
+    const initialCameraTarget = new THREE.Vector3(
+  96.24822638865066,
+  -19.791887348934992,
+  84.40671469881478
+    );
+
+    const floorplanCameraPosition = new THREE.Vector3(
+      155.6827767794878,
+      777.4682489609952,
+      53.0248292781676
+    );
+
+    const floorplanCameraTarget = new THREE.Vector3(
+      155.6751082792241,
+      -38.324372057255744,
+      50.31645690779028
+    );
+
+    const livingRoomPosition = new THREE.Vector3(
+      15,
+      -5,
+      55
+    );
+
+    const projectedLocation = new THREE.Vector3();
+    let currentViewMode = '3d';
+
+    // 카메라 전환 애니메이션 (3D ↔ 평면도)
+    let cameraAnimationId = null;
+    let cameraTransitionToken = 0;
+
+    function animateCamera(targetPosition, targetLookAt, onComplete) {
+      if (cameraAnimationId !== null) cancelAnimationFrame(cameraAnimationId);
+      const token = ++cameraTransitionToken;
+      const fromPosition = camera.position.clone();
+      const fromTarget = controls.target.clone();
+      const startTime = performance.now();
+      const duration = 600;
+
+      function step(now) {
+        if (token !== cameraTransitionToken) return;
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        camera.position.lerpVectors(fromPosition, targetPosition, eased);
+        controls.target.lerpVectors(fromTarget, targetLookAt, eased);
+        camera.lookAt(controls.target);
+        if (t < 1) {
+          cameraAnimationId = requestAnimationFrame(step);
+        } else {
+          cameraAnimationId = null;
+          onComplete();
+        }
+      }
+      cameraAnimationId = requestAnimationFrame(step);
+    }
+
+    function runViewControlTransition(getDestination) {
+      if (cameraAnimationId !== null || currentViewMode !== '3d') return;
+
+      controls.enableDamping = false;
+      controls.update();
+
+      const destination = getDestination();
+      if (!destination) {
+        controls.enableDamping = initialControlState.enableDamping;
+        return;
+      }
+
+      const targetPosition = destination.position;
+      const targetLookAt = destination.target;
+
+      controls.enabled = false;
+      viewControls.classList.add('is-transitioning');
+
+      animateCamera(targetPosition, targetLookAt, () => {
+        camera.position.copy(targetPosition);
+        controls.target.copy(targetLookAt);
+        camera.lookAt(targetLookAt);
+        controls.update();
+        controls.enableDamping = initialControlState.enableDamping;
+        controls.enabled = true;
+        viewControls.classList.remove('is-transitioning');
+      });
+    }
+
+    function zoomWithViewControl(direction) {
+      if (cameraAnimationId !== null || currentViewMode !== '3d') return;
+
+      runViewControlTransition(() => {
+        const offset = camera.position.clone().sub(controls.target);
+        const zoomScale = Math.pow(0.95, controls.zoomSpeed);
+        const distanceScale = direction < 0 ? zoomScale : 1 / zoomScale;
+        const distance = THREE.MathUtils.clamp(
+          offset.length() * distanceScale,
+          controls.minDistance,
+          controls.maxDistance
+        );
+
+        if (Math.abs(distance - offset.length()) < 0.0001) return null;
+
+        return {
+          position: controls.target.clone().add(offset.setLength(distance)),
+          target: controls.target.clone()
+        };
+      });
+    }
+
+    homeViewButton.addEventListener('click', () => {
+      runViewControlTransition(() => {
+        const cameraOffset = camera.position.clone().sub(controls.target);
+        return {
+          position: initialCameraTarget.clone().add(cameraOffset),
+          target: initialCameraTarget.clone()
+        };
+      });
+    });
+
+    zoomInButton.addEventListener('click', () => zoomWithViewControl(-1));
+    zoomOutButton.addEventListener('click', () => zoomWithViewControl(1));
+    resetViewButton.addEventListener('click', () => {
+      runViewControlTransition(() => ({
+        position: initialCameraPosition.clone(),
+        target: initialCameraTarget.clone()
+      }));
+    });
+
+    function setViewMode(mode, instant = false) {
+      const isFloorplan = mode === 'floorplan';
+      currentViewMode = mode;
+      const targetPosition = isFloorplan ? floorplanCameraPosition : initialCameraPosition;
+      const targetLookAt = isFloorplan ? floorplanCameraTarget : initialCameraTarget;
+
+      // 전환 중 조작을 차단하고, 탑뷰를 허용하도록 각도 제한을 일시 해제
+      controls.enabled = false;
+      controls.enableDamping = false;
+      controls.maxPolarAngle = Math.PI;
+      viewControls.classList.toggle('is-transitioning', !instant);
+
+      function finishTransition() {
+        controls.enableRotate = isFloorplan ? false : initialControlState.enableRotate;
+        controls.enableZoom = isFloorplan ? false : initialControlState.enableZoom;
+        controls.enablePan = isFloorplan ? false : initialControlState.enablePan;
+        controls.enableDamping = isFloorplan ? false : initialControlState.enableDamping;
+        controls.maxPolarAngle = isFloorplan ? Math.PI : initialControlState.maxPolarAngle;
+        controls.mouseButtons = isFloorplan
+          ? { LEFT: null, MIDDLE: null, RIGHT: null }
+          : { ...initialControlState.mouseButtons };
+        controls.touches = isFloorplan
+          ? { ONE: null, TWO: null }
+          : { ...initialControlState.touches };
+        controls.enabled = !isFloorplan;
+        controls.update();
+        viewControls.classList.remove('is-transitioning');
+      }
+
+      if (instant) {
+        if (cameraAnimationId !== null) cancelAnimationFrame(cameraAnimationId);
+        cameraAnimationId = null;
+        cameraTransitionToken++;
+        camera.position.copy(targetPosition);
+        controls.target.copy(targetLookAt);
+        camera.lookAt(controls.target);
+        finishTransition();
+      } else {
+        animateCamera(targetPosition, targetLookAt, finishTransition);
+      }
+
+      viewControls.classList.toggle('is-hidden', isFloorplan);
+      modeOptions.forEach((option) => {
+        const active = option.dataset.view === mode;
+        option.classList.toggle('active', active);
+        option.setAttribute('aria-pressed', String(active));
+      });
+    }
+
+    // 누락되었던 모드 전환 버튼 클릭 이벤트 연결
+    modeOptions.forEach((option) => {
+      option.addEventListener('click', () => {
+        if (
+          cameraAnimationId === null &&
+          option.dataset.view !== currentViewMode
+        ) {
+          setViewMode(option.dataset.view);
+        }
+      });
+    });
+
+    function updateHealthScrollButtons() {
+      const maxScroll = healthGrid.scrollWidth - healthGrid.clientWidth;
+      healthPrevButton.disabled = healthGrid.scrollLeft <= 1;
+      healthNextButton.disabled = healthGrid.scrollLeft >= maxScroll - 1;
+    }
+
+    function scrollHealthGrid(direction) {
+      const firstCard = healthGrid.querySelector('.metric-card');
+      const gap = parseFloat(getComputedStyle(healthGrid).gap) || 0;
+      const step = firstCard.offsetWidth + gap;
+
+      healthGrid.scrollBy({
+        left: direction * step,
+        behavior: 'smooth'
+      });
+    }
+
+    healthPrevButton.addEventListener('click', () => scrollHealthGrid(-1));
+    healthNextButton.addEventListener('click', () => scrollHealthGrid(1));
+    healthGrid.addEventListener('scroll', updateHealthScrollButtons, { passive: true });
+    requestAnimationFrame(updateHealthScrollButtons);
+
+    function updateLocationOverlay() {
+      camera.updateMatrixWorld();
+      projectedLocation.copy(livingRoomPosition).project(camera);
+
+      const dashboardRect = dashboard.getBoundingClientRect();
+      const viewportX = (projectedLocation.x * 0.5 + 0.5) * window.innerWidth;
+      const viewportY = (-projectedLocation.y * 0.5 + 0.5) * window.innerHeight;
+      const x = viewportX - dashboardRect.left;
+      const y = viewportY - dashboardRect.top;
+      const scale = dashboardRect.width / 1920;
+      const isVisible =
+        projectedLocation.z >= -1 &&
+        projectedLocation.z <= 1 &&
+        x >= 0 &&
+        x <= dashboardRect.width &&
+        y >= 0 &&
+        y <= dashboardRect.height;
+
+      locationMarker.hidden = !isVisible;
+      locationTooltip.hidden = !isVisible;
+
+      if (!isVisible) return;
+
+      locationMarker.style.left = `${x}px`;
+      locationMarker.style.top = `${y}px`;
+      locationTooltip.style.left = `${x - 72 * scale}px`;
+      locationTooltip.style.top = `${y - 105 * scale}px`;
+    }
+
+
+    // ==========================================
+    // 5. GLB 모델 불러오기
+    // ==========================================
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+      './deepcheck_home.glb',
+
+      (gltf) => {
+        const model = gltf.scene;
+        scene.add(model);
+
+        const box = new THREE.Box3().setFromObject(model);
+
+        if (box.isEmpty()) {
+          status.textContent = '모델에 표시할 메시가 없습니다.';
+          return;
+        }
+
+        const size = box.getSize(new THREE.Vector3());
+        const radius = Math.max(size.x, size.y, size.z);
+
+        // 카메라 가시 범위
+        camera.near = Math.max(radius / 1000, 0.001);
+        camera.far = Math.max(radius * 100, 100);
+
+camera.updateProjectionMatrix();
+setViewMode(currentViewMode, true);
+
+        status.textContent = '';
+      },
+
+      undefined,
+
+      (error) => {
+        console.error(error);
+        status.textContent =
+          '모델 로딩 실패: GLB 파일명과 서버 실행 여부를 확인하세요.';
+      }
+    );
+
+
+    // ==========================================
+    // 6. 브라우저 크기 변경 대응
+    // ==========================================
+
+    window.addEventListener('resize', () => {
+      camera.aspect =
+        window.innerWidth / window.innerHeight;
+
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+      );
+
+      updateHealthScrollButtons();
+    });
+
+
+    // ==========================================
+    // 7. 렌더링 및 카메라 좌표 출력
+    // ==========================================
+
+    window.printCameraPosition = false;
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (cameraAnimationId === null) controls.update();
+      updateLocationOverlay();
+
+      if (window.printCameraPosition) {
+        console.log(
+          "Camera:",
+          camera.position.toArray()
+        );
+
+        console.log(
+          "Target:",
+          controls.target.toArray()
+        );
+
+        window.printCameraPosition = false;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+  </script>
+</body>
+</html>
