@@ -704,6 +704,372 @@
 
     .reset-button { margin-top: .4688cqw; }
 
+    .metric-card {
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .health-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: rgba(15, 23, 42, .3);
+      backdrop-filter: blur(4.5px);
+      -webkit-backdrop-filter: blur(4.5px);
+    }
+
+    .health-modal[hidden] { display: none; }
+
+    .health-dialog {
+      width: min(1237px, calc(100vw - 64px));
+      height: min(815px, calc(100vh - 96px));
+      display: grid;
+      grid-template-rows: clamp(48px, 5.65vh, 61px) minmax(0, .92fr) minmax(190px, 1.08fr);
+      padding: clamp(24px, 4.66vh, 50px) clamp(24px, 2.625vw, 50px) clamp(16px, 2.2vh, 24px);
+      overflow: hidden;
+      border: 1px solid rgba(229, 235, 245, .9);
+      border-radius: clamp(18px, 1.32vw, 26px);
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, .18);
+    }
+
+    .health-modal-close {
+      position: fixed;
+      top: max(8px, calc((100vh - min(815px, calc(100vh - 96px))) / 2 - 78px));
+      left: 50%;
+      display: grid;
+      width: clamp(42px, 2.708vw, 52px);
+      aspect-ratio: 1;
+      place-items: center;
+      padding: 0;
+      transform: translateX(-50%);
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .4);
+      color: rgba(255, 255, 255, .9);
+      cursor: pointer;
+    }
+
+    .health-modal-close:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, .85);
+      outline-offset: 3px;
+    }
+
+    .health-modal-close svg {
+      width: 44%;
+      height: 44%;
+    }
+
+    .health-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      padding: 5px;
+      border: 1px solid #e5ebf5;
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .health-tab {
+      display: grid;
+      height: 100%;
+      place-items: center;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 14px;
+      background: transparent;
+      color: #475569;
+      font: inherit;
+      font-size: clamp(12px, .833vw, 16px);
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .health-tab.active {
+      border: 1px solid #d5e3fc;
+      background: #edf3ff;
+      color: #1a2433;
+      box-shadow: 0 2px 8px rgba(0, 101, 239, .08);
+    }
+
+    .health-detail {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: clamp(12px, 1.48vh, 16px);
+      min-height: 0;
+      padding: clamp(18px, 2.6vh, 28px) 0 clamp(14px, 2vh, 22px);
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .health-title-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .health-title {
+      margin: 0;
+      color: #0f172a;
+      font-size: clamp(18px, 1.146vw, 22px);
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+
+    .health-title-tag {
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: clamp(10px, .625vw, 12px);
+      font-weight: 500;
+    }
+
+    .health-description {
+      margin: 0;
+      color: #64748b;
+      font-size: clamp(11px, .729vw, 14px);
+      font-weight: 500;
+      line-height: 1.55;
+    }
+
+    .health-overview {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 39%);
+      align-items: center;
+      gap: clamp(20px, 2.2vw, 42px);
+      min-height: 0;
+    }
+
+    .latest-label-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: clamp(8px, 1vh, 12px);
+      color: #64748b;
+      font-size: clamp(12px, .729vw, 14px);
+      font-weight: 600;
+    }
+
+    .health-status-badge {
+      display: inline-flex;
+      min-width: 54px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border-radius: 14px;
+      background: #edf3ff;
+      color: #0065ef;
+      font-size: clamp(10px, .625vw, 12px);
+      font-weight: 700;
+    }
+
+    .health-status-badge.moderate {
+      background: #fef5e7;
+      color: #d97706;
+    }
+
+    .health-status-badge.warning {
+      background: #fee8e8;
+      color: #ef4444;
+    }
+
+    .health-latest-value {
+      color: #14203a;
+      font-size: clamp(34px, 3.02vw, 58px);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -.045em;
+      white-space: nowrap;
+    }
+
+    .health-latest-unit {
+      margin-left: 10px;
+      color: #64748b;
+      font-size: clamp(12px, .833vw, 16px);
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .health-summary {
+      padding: clamp(14px, 1.35vw, 22px);
+      border: 1px solid #d5e3fc;
+      border-radius: 12px;
+      background: rgba(237, 243, 255, .24);
+      color: #334155;
+      font-size: clamp(11px, .729vw, 14px);
+      font-weight: 500;
+      line-height: 1.65;
+    }
+
+    .health-summary strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #1a2433;
+      font-size: clamp(12px, .781vw, 15px);
+      font-weight: 700;
+    }
+
+    .health-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .health-stat + .health-stat {
+      padding-left: clamp(18px, 2.08vw, 40px);
+      border-left: 1px solid #e2e8f0;
+    }
+
+    .health-stat-label {
+      margin-bottom: 8px;
+      color: #64748b;
+      font-size: clamp(11px, .729vw, 14px);
+      font-weight: 600;
+    }
+
+    .health-stat-value {
+      color: #14203a;
+      font-size: clamp(20px, 1.667vw, 32px);
+      font-weight: 700;
+      letter-spacing: -.025em;
+      white-space: nowrap;
+    }
+
+    .health-stat-value.positive { color: #0065ef; }
+    .health-stat-value.attention { color: #ef4444; }
+
+    .health-chart-section {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+      padding-top: clamp(14px, 2vh, 22px);
+    }
+
+    .health-chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .health-chart-meta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .health-chart-title {
+      margin: 0;
+      color: #1a2433;
+      font-size: clamp(13px, .833vw, 16px);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .health-chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #526071;
+      font-size: clamp(10px, .625vw, 12px);
+      font-weight: 500;
+    }
+
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .chart-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--legend-color);
+      box-shadow: 0 2px 5px color-mix(in srgb, var(--legend-color) 30%, transparent);
+    }
+
+    .health-periods {
+      display: flex;
+      flex: none;
+      padding: 3px;
+      border-radius: 9px;
+      background: #f1f5f9;
+    }
+
+    .health-period {
+      min-width: 48px;
+      height: 28px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: #64748b;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .health-period.active {
+      background: #fff;
+      color: #0065ef;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, .08);
+    }
+
+    .health-chart-wrap {
+      min-height: 0;
+      padding-top: 6px;
+    }
+
+    .health-chart {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    @media (max-width: 780px), (max-height: 760px) {
+      .health-modal { place-items: start center; }
+
+      .health-dialog {
+        width: calc(100vw - 24px);
+        height: calc(100vh - 70px);
+        grid-template-rows: 44px minmax(0, .88fr) minmax(150px, 1.12fr);
+        margin-top: 52px;
+        padding: 14px 18px 12px;
+        border-radius: 18px;
+      }
+
+      .health-modal-close {
+        top: 8px;
+        right: auto;
+        left: 50%;
+        z-index: 1;
+        width: 36px;
+        transform: translateX(-50%);
+      }
+      .health-tabs { padding: 3px; border-radius: 10px; }
+      .health-tab { padding: 0 4px; border-radius: 9px; font-size: 10px; }
+      .health-detail { gap: 8px; padding: 12px 0 10px; }
+      .health-title-line { margin-bottom: 3px; }
+      .health-description { line-height: 1.3; }
+      .health-overview { grid-template-columns: minmax(0, 1fr) minmax(220px, 42%); gap: 12px; }
+      .health-summary { padding: 9px 11px; line-height: 1.4; }
+      .health-summary strong { margin-bottom: 2px; }
+      .health-status-badge { min-width: 42px; height: 22px; padding: 0 8px; }
+      .latest-label-row, .health-stat-label { margin-bottom: 4px; }
+      .health-stat + .health-stat { padding-left: 12px; }
+      .health-chart-section { padding-top: 8px; }
+      .health-period { min-width: 38px; height: 24px; padding: 0 6px; font-size: 9px; }
+    }
+
     #status {
       position: fixed;
       z-index: 4;
@@ -771,27 +1137,27 @@
         <h2 class="card-heading">최근 측정결과</h2>
         <div class="measurement-date">10월 29일 (금) 오후 10:10 기준</div>
         <div class="health-grid">
-          <article class="metric-card">
+          <article class="metric-card" data-health-metric="heartRate" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="metric-head"><span>심박수</span><span class="badge">정상</span></div>
             <div class="metric-value">72<small>회/분</small></div>
             <div class="metric-foot">이전 대비 <b>-4</b></div>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-health-metric="bloodPressure" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="metric-head"><span>혈압</span><span class="badge">정상</span></div>
             <div class="metric-value">120/80</div>
             <div class="metric-foot">수축기 -6 · 이완기 0</div>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-health-metric="fatigue" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="metric-head"><span>피로도</span><span class="badge warning">주의</span></div>
             <div class="metric-value">35<small>/100점</small></div>
             <div class="metric-foot">이전 대비 <b>-7</b></div>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-health-metric="stress" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="metric-head"><span>스트레스</span><span class="badge danger">주의</span></div>
             <div class="metric-value">50<small>/100점</small></div>
             <div class="metric-foot">이전 대비 <b class="danger">+2</b></div>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-health-metric="recovery" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="metric-head"><span>회복력</span><span class="badge">정상</span></div>
             <div class="metric-value">75<small>/100점</small></div>
             <div class="metric-foot">이전 대비 <b>+5</b></div>
@@ -897,6 +1263,80 @@
     </main>
   </div>
 
+  <div class="health-modal" role="dialog" aria-modal="true" aria-labelledby="health-modal-title" hidden>
+    <button class="health-modal-close" type="button" aria-label="건강정보 상세 팝업 닫기">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="m5 5 14 14M19 5 5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <div class="health-dialog">
+      <div class="health-tabs" role="tablist" aria-label="건강 지표 선택">
+        <button class="health-tab active" type="button" role="tab" data-health-tab="bloodPressure" aria-selected="true">혈압</button>
+        <button class="health-tab" type="button" role="tab" data-health-tab="heartRate" aria-selected="false">심박수</button>
+        <button class="health-tab" type="button" role="tab" data-health-tab="fatigue" aria-selected="false">피로도</button>
+        <button class="health-tab" type="button" role="tab" data-health-tab="stress" aria-selected="false">스트레스</button>
+        <button class="health-tab" type="button" role="tab" data-health-tab="recovery" aria-selected="false">스트레스 회복력</button>
+      </div>
+
+      <section class="health-detail">
+        <header>
+          <div class="health-title-line">
+            <h2 class="health-title" id="health-modal-title"></h2>
+            <span class="health-title-tag"></span>
+          </div>
+          <p class="health-description"></p>
+        </header>
+
+        <div class="health-overview">
+          <div class="health-latest">
+            <div class="latest-label-row">
+              <span>최신 측정값</span>
+              <span class="health-status-badge"></span>
+            </div>
+            <div class="health-latest-value"><span></span><small class="health-latest-unit"></small></div>
+          </div>
+          <div class="health-summary">
+            <strong class="health-summary-title"></strong>
+            <span class="health-summary-text"></span>
+          </div>
+        </div>
+
+        <div class="health-stats">
+          <div class="health-stat">
+            <div class="health-stat-label">이전 측정 대비</div>
+            <div class="health-stat-value health-comparison"></div>
+          </div>
+          <div class="health-stat">
+            <div class="health-stat-label">최근 7일 평균</div>
+            <div class="health-stat-value health-average-week"></div>
+          </div>
+          <div class="health-stat">
+            <div class="health-stat-label">최근 30일 평균</div>
+            <div class="health-stat-value health-average-month"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="health-chart-section">
+        <div class="health-chart-header">
+          <div class="health-chart-meta">
+            <h3 class="health-chart-title"></h3>
+            <div class="health-chart-legend" aria-label="그래프 범례"></div>
+          </div>
+          <div class="health-periods" aria-label="조회 기간">
+            <button class="health-period active" type="button">7일</button>
+            <button class="health-period" type="button">30일</button>
+            <button class="health-period" type="button">90일</button>
+          </div>
+        </div>
+        <div class="health-chart-wrap">
+          <svg class="health-chart" viewBox="0 0 1120 240" preserveAspectRatio="none" role="img"></svg>
+        </div>
+      </section>
+    </div>
+  </div>
+
   <div id="status"></div>
 
   <script type="importmap">
@@ -931,6 +1371,299 @@
     const healthGrid = document.querySelector('.health-grid');
     const healthPrevButton = document.querySelector('.recent-scroll-button.prev');
     const healthNextButton = document.querySelector('.recent-scroll-button.next');
+    const healthModal = document.querySelector('.health-modal');
+    const healthModalClose = document.querySelector('.health-modal-close');
+    const healthMetricCards = document.querySelectorAll('[data-health-metric]');
+    const healthTabs = document.querySelectorAll('[data-health-tab]');
+    const healthTitle = document.querySelector('.health-title');
+    const healthTitleTag = document.querySelector('.health-title-tag');
+    const healthDescription = document.querySelector('.health-description');
+    const healthStatusBadge = document.querySelector('.health-status-badge');
+    const healthLatestValue = document.querySelector('.health-latest-value > span');
+    const healthLatestUnit = document.querySelector('.health-latest-unit');
+    const healthSummaryTitle = document.querySelector('.health-summary-title');
+    const healthSummaryText = document.querySelector('.health-summary-text');
+    const healthComparison = document.querySelector('.health-comparison');
+    const healthAverageWeek = document.querySelector('.health-average-week');
+    const healthAverageMonth = document.querySelector('.health-average-month');
+    const healthChartTitle = document.querySelector('.health-chart-title');
+    const healthChartLegend = document.querySelector('.health-chart-legend');
+    const healthChart = document.querySelector('.health-chart');
+
+    const dates = ['10/23', '10/24', '10/25', '10/26', '10/27', '10/28', '10/29'];
+
+    const chartData = {
+      bloodPressure: {
+        systolic: [122, 124, 121, 125, 119, 126, 120],
+        diastolic: [82, 81, 80, 83, 78, 80, 80]
+      },
+      heartRate: [74, 71, 75, 73, 72, 76, 72],
+      fatigue: [43, 41, 40, 38, 37, 42, 35],
+      stress: [44, 46, 45, 47, 48, 48, 50],
+      recovery: [67, 69, 68, 71, 72, 70, 75]
+    };
+
+    const healthMetricConfig = {
+      bloodPressure: {
+        label: '혈압',
+        tag: 'BP Monitoring',
+        description: '혈액이 혈관 벽에 가하는 압력으로, 심혈관 건강을 확인하는 주요 지표입니다.',
+        latest: '120 / 80',
+        unit: 'mmHg',
+        status: '정상',
+        statusTone: 'normal',
+        summaryTitle: '현재 혈압은 정상 범위입니다.',
+        summaryText: '이전보다 수축기 혈압이 6mmHg 낮아졌으며, 최근 7일간 안정적인 수치를 보였습니다.',
+        comparison: '↓ -6 / 0',
+        comparisonTone: 'positive',
+        averageWeek: '123 / 81',
+        averageMonth: '124 / 82',
+        chartUnit: 'mmHg',
+        series: [
+          { label: '수축기', color: '#0065ef', values: chartData.bloodPressure.systolic },
+          { label: '이완기', color: '#94a3b8', values: chartData.bloodPressure.diastolic }
+        ]
+      },
+      heartRate: {
+        label: '심박수',
+        tag: 'Heart Rate',
+        description: '1분 동안 심장이 뛰는 횟수로, 심장 활동 상태를 확인하는 지표입니다.',
+        latest: '72',
+        unit: '회/분',
+        status: '정상',
+        statusTone: 'normal',
+        summaryTitle: '현재 심박수는 일반적인 안정 시 범위에 있습니다.',
+        summaryText: '이전보다 4회/분 감소했으며, 최근 7일간 큰 변동이 없었습니다.',
+        comparison: '↓ -4',
+        comparisonTone: 'positive',
+        averageWeek: '73',
+        averageMonth: '74',
+        chartUnit: '회/분',
+        series: [{ label: '심박수', color: '#0065ef', values: chartData.heartRate }]
+      },
+      fatigue: {
+        label: '피로도',
+        tag: 'Fatigue',
+        description: '신체의 피로 수준을 점수로 나타내어 컨디션 변화를 확인하는 지표입니다.',
+        latest: '35',
+        unit: '/100점',
+        status: '보통',
+        statusTone: 'moderate',
+        summaryTitle: '현재 피로도는 보통 수준입니다.',
+        summaryText: '이전보다 7점 낮아졌으며, 최근 7일간 전반적으로 감소했습니다.',
+        comparison: '↓ -7',
+        comparisonTone: 'positive',
+        averageWeek: '39',
+        averageMonth: '41',
+        chartUnit: '점',
+        series: [{ label: '피로도', color: '#f59e0b', values: chartData.fatigue }]
+      },
+      stress: {
+        label: '스트레스',
+        tag: 'Stress',
+        description: '스트레스 관련 생체신호 분석 결과를 점수로 나타낸 지표입니다.',
+        latest: '50',
+        unit: '/100점',
+        status: '주의',
+        statusTone: 'warning',
+        summaryTitle: '현재 스트레스 점수가 설정된 주의 구간에 있습니다.',
+        summaryText: '이전보다 2점 증가했으며, 최근 7일간 소폭 상승했습니다.',
+        comparison: '↑ +2',
+        comparisonTone: 'attention',
+        averageWeek: '47',
+        averageMonth: '45',
+        chartUnit: '점',
+        series: [{ label: '스트레스', color: '#ef4444', values: chartData.stress }]
+      },
+      recovery: {
+        label: '스트레스 회복력',
+        tag: 'Recovery',
+        description: '스트레스 이후 생리적 회복 상태를 점수로 나타낸 지표입니다.',
+        latest: '75',
+        unit: '/100점',
+        status: '정상',
+        statusTone: 'normal',
+        summaryTitle: '현재 회복력은 설정된 정상 구간에 있습니다.',
+        summaryText: '이전보다 5점 상승했으며, 최근 7일간 완만하게 증가했습니다.',
+        comparison: '↑ +5',
+        comparisonTone: 'positive',
+        averageWeek: '71',
+        averageMonth: '69',
+        chartUnit: '점',
+        series: [{ label: '회복력', color: '#0065ef', values: chartData.recovery }]
+      }
+    };
+
+    const svgNamespace = 'http://www.w3.org/2000/svg';
+    let lastHealthCard = null;
+
+    function appendChartElement(parent, tagName, attributes, textValue = '') {
+      const element = document.createElementNS(svgNamespace, tagName);
+      Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, value));
+      if (textValue !== '') element.textContent = textValue;
+      parent.appendChild(element);
+      return element;
+    }
+
+    function drawHealthChart(metricKey) {
+      const config = healthMetricConfig[metricKey];
+      const allValues = config.series.flatMap((series) => series.values);
+      const range = Math.max(...allValues) - Math.min(...allValues);
+      const padding = Math.max(4, range * .18);
+      const minValue = Math.min(...allValues) - padding;
+      const maxValue = Math.max(...allValues) + padding;
+      const plot = { left: 44, right: 1090, top: 30, bottom: 194 };
+      const xStep = (plot.right - plot.left) / (dates.length - 1);
+      const yForValue = (value) => plot.bottom - ((value - minValue) / (maxValue - minValue)) * (plot.bottom - plot.top);
+
+      healthChart.replaceChildren();
+      healthChart.setAttribute('aria-label', `${config.label} 최근 7일 변화 그래프, 단위 ${config.chartUnit}`);
+
+      [0, 1, 2].forEach((index) => {
+        const bandHeight = (plot.bottom - plot.top) / 3;
+        appendChartElement(healthChart, 'rect', {
+          x: plot.left,
+          y: plot.top + index * bandHeight,
+          width: plot.right - plot.left,
+          height: bandHeight,
+          fill: index % 2 === 0 ? '#f0f7ff' : '#f8fafc',
+          opacity: index % 2 === 0 ? '.7' : '1'
+        });
+      });
+
+      [0, .5, 1].forEach((position) => {
+        const y = plot.top + (plot.bottom - plot.top) * position;
+        appendChartElement(healthChart, 'line', {
+          x1: plot.left,
+          y1: y,
+          x2: plot.right,
+          y2: y,
+          stroke: '#e2e8f0',
+          'stroke-width': '1.2',
+          'stroke-dasharray': '7 7',
+          'vector-effect': 'non-scaling-stroke'
+        });
+      });
+
+      config.series.forEach((series, seriesIndex) => {
+        const points = series.values.map((value, index) => ({
+          value,
+          x: plot.left + index * xStep,
+          y: yForValue(value)
+        }));
+        const pathData = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+
+        appendChartElement(healthChart, 'path', {
+          d: pathData,
+          fill: 'none',
+          stroke: series.color,
+          'stroke-width': '2.2',
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          'vector-effect': 'non-scaling-stroke'
+        });
+
+        points.forEach((point) => {
+          appendChartElement(healthChart, 'circle', {
+            cx: point.x,
+            cy: point.y,
+            r: '4.2',
+            fill: '#fff',
+            stroke: series.color,
+            'stroke-width': '2',
+            'vector-effect': 'non-scaling-stroke'
+          });
+          appendChartElement(healthChart, 'text', {
+            x: point.x,
+            y: point.y + (seriesIndex === 0 ? -11 : 18),
+            fill: '#526071',
+            'font-size': '12',
+            'font-weight': '500',
+            'text-anchor': 'middle'
+          }, String(point.value));
+        });
+      });
+
+      dates.forEach((date, index) => {
+        appendChartElement(healthChart, 'text', {
+          x: plot.left + index * xStep,
+          y: '226',
+          fill: '#94a3b8',
+          'font-size': '12',
+          'font-weight': '500',
+          'text-anchor': 'middle'
+        }, date);
+      });
+    }
+
+    function renderHealthMetric(metricKey) {
+      const config = healthMetricConfig[metricKey];
+      if (!config) return;
+
+      healthTitle.textContent = config.label;
+      healthTitleTag.textContent = config.tag;
+      healthDescription.textContent = config.description;
+      healthStatusBadge.textContent = config.status;
+      healthStatusBadge.className = `health-status-badge ${config.statusTone === 'normal' ? '' : config.statusTone}`.trim();
+      healthLatestValue.textContent = config.latest;
+      healthLatestUnit.textContent = config.unit;
+      healthSummaryTitle.textContent = config.summaryTitle;
+      healthSummaryText.textContent = config.summaryText;
+      healthComparison.textContent = config.comparison;
+      healthComparison.className = `health-stat-value health-comparison ${config.comparisonTone}`;
+      healthAverageWeek.textContent = config.averageWeek;
+      healthAverageMonth.textContent = config.averageMonth;
+      healthChartTitle.textContent = `${config.label} 변화 · 단위 ${config.chartUnit}`;
+
+      healthChartLegend.replaceChildren();
+      config.series.forEach((series) => {
+        const legendItem = document.createElement('span');
+        legendItem.className = 'chart-legend-item';
+        const legendDot = document.createElement('i');
+        legendDot.className = 'chart-legend-dot';
+        legendDot.style.setProperty('--legend-color', series.color);
+        const legendLabel = document.createElement('span');
+        legendLabel.textContent = series.label;
+        legendItem.append(legendDot, legendLabel);
+        healthChartLegend.appendChild(legendItem);
+      });
+
+      healthTabs.forEach((tab) => {
+        const active = tab.dataset.healthTab === metricKey;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', String(active));
+      });
+
+      drawHealthChart(metricKey);
+    }
+
+    function openHealthModal(metricKey, trigger) {
+      lastHealthCard = trigger;
+      renderHealthMetric(metricKey);
+      healthModal.hidden = false;
+      healthModalClose.focus({ preventScroll: true });
+    }
+
+    function closeHealthModal() {
+      healthModal.hidden = true;
+      lastHealthCard?.focus({ preventScroll: true });
+    }
+
+    healthMetricCards.forEach((card) => {
+      card.addEventListener('click', () => openHealthModal(card.dataset.healthMetric, card));
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openHealthModal(card.dataset.healthMetric, card);
+        }
+      });
+    });
+
+    healthTabs.forEach((tab) => {
+      tab.addEventListener('click', () => renderHealthMetric(tab.dataset.healthTab));
+    });
+
+    healthModalClose.addEventListener('click', closeHealthModal);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#f5f5f5');
