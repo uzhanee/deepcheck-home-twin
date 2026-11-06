@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="./logo.svg" />
   <title>DeepCheck | 3D 공간 모니터링</title>
 
   <style>
@@ -213,10 +214,12 @@
       top: 11.2%;
       left: 6.78%;
       width: 19.32%;
+      height: auto;
+      min-width: 0;
       aspect-ratio: 1;
       overflow: hidden;
       border: 0;
-      border-radius: 0;
+      border-radius: 50%;
       background: #fff;
       box-shadow: 0 .0572cqw .1144cqw rgba(0, 0, 0, .05);
     }
@@ -224,6 +227,9 @@
     .profile-photo img {
       width: 100%;
       height: 100%;
+      min-width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
       object-fit: cover;
       object-position: center center;
     }
@@ -260,22 +266,20 @@
       height: 14.458%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 0 .625cqw;
       border: .0381cqw solid #d5e3fc;
       border-radius: .4386cqw;
+      background: transparent;
       color: #1a2433;
+      font-family: inherit;
       font-size: .625cqw;
       font-weight: 500;
+      cursor: pointer;
+      pointer-events: auto;
     }
 
-    .chevron {
-      width: .5208cqw;
-      height: .5208cqw;
-      border-right: .0781cqw solid #94a3b8;
-      border-bottom: .0781cqw solid #94a3b8;
-      transform: translateY(-.1042cqw) rotate(45deg);
-    }
+    .person-select.is-transitioning { pointer-events: none; }
 
     .last-measurement {
       position: absolute;
@@ -322,6 +326,18 @@
       left: 72.65625%;
       width: 24.84375%;
       border-radius: 1.1905cqw;
+    }
+
+    .profile-card,
+    .dashboard-card {
+      transition: opacity .2s ease-in-out, transform .2s ease-in-out;
+      will-change: opacity, transform;
+    }
+
+    .profile-card.person-transition-out,
+    .dashboard-card.person-transition-out {
+      opacity: 0;
+      transform: translateY(.3125cqw);
     }
 
     .recent-card {
@@ -448,6 +464,7 @@
 
     .metric-foot b { color: #0065ef; }
     .metric-foot b.danger { color: #ef4444; }
+    .metric-foot.attention { color: #ef4444; }
 
     .recent-scroll-button {
       position: absolute;
@@ -570,6 +587,37 @@
     .timeline-card {
       top: 63.5444%;
       height: 32.3413%;
+    }
+
+    .timeline-card::after {
+      content: "";
+      position: absolute;
+      z-index: 20;
+      inset: 0;
+      border: 2px solid transparent;
+      border-radius: inherit;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .timeline-card.analysis-highlight {
+      animation: activity-analysis-card-highlight 1.2s ease-out both;
+    }
+
+    .timeline-card.analysis-highlight::after {
+      animation: activity-analysis-border-highlight 1.2s ease-out both;
+    }
+
+
+    @keyframes activity-analysis-border-highlight {
+      0% {
+        border-color: #0064efa5;
+        opacity: 1;
+      }
+      100% {
+        border-color: rgba(0, 101, 239, 0);
+        opacity: 0;
+      }
     }
 
     .timeline-card .card-heading { top: 1.6667cqw; }
@@ -1289,16 +1337,15 @@
 
       <section class="glass-card profile-card">
         <div class="profile-photo">
-          <img src="./deepcheck-profile.jpg" alt="" />
+          <img src="./deepcheck-profile.jpg" alt="김영희 프로필" />
         </div>
         <div class="profile-info">
           <span class="profile-name">김영희 님</span>
           <span class="profile-meta">78세 · 여성</span>
         </div>
-        <div class="person-select">
+        <button class="person-select" type="button">
           <span>다른 피보호자 보기</span>
-          <span class="chevron"></span>
-        </div>
+        </button>
         <div class="last-measurement">
           <span class="check-circle">
             <svg viewBox="0 0 24 24" fill="none">
@@ -1564,9 +1611,17 @@
     const dashboard = document.querySelector('.dashboard');
     const locationMarker = document.querySelector('.location-marker');
     const locationTooltip = document.querySelector('.location-tooltip');
+    const locationTooltipText = document.querySelector('.location-tooltip strong');
+    const profileImage = document.querySelector('.profile-photo img');
+    const profileName = document.querySelector('.profile-name');
+    const profileMeta = document.querySelector('.profile-meta');
+    const personSelectButton = document.querySelector('.person-select');
+    const personTransitionCards = document.querySelectorAll('.profile-card, .dashboard-card');
+    const lastMeasurementValue = document.querySelector('.measure-value');
     const roomTooltip = document.querySelector('.room-tooltip');
     const roomTooltipName = document.querySelector('.room-tooltip-name');
     const roomTooltipActivity = document.querySelector('.room-tooltip-activity');
+    const timelineCard = document.querySelector('.timeline-card');
     const activityLogView = document.querySelector('.activity-log-view');
     const roomAnalysisView = document.querySelector('.room-analysis-view');
     const analysisHeading = document.querySelector('.analysis-heading');
@@ -1581,6 +1636,11 @@
     const resetViewButton = document.querySelector('.reset-button');
     const modeOptions = document.querySelectorAll('.mode-option');
     const healthGrid = document.querySelector('.health-grid');
+    const measurementDate = document.querySelector('.measurement-date');
+    const summaryValues = document.querySelectorAll('.summary-value');
+    const activityBarSegments = document.querySelectorAll('.activity-bar span');
+    const activityLegendItems = document.querySelectorAll('.activity-legend .legend-item');
+    const activityTimelineRows = document.querySelectorAll('.activity-log-view .timeline-row');
     const healthPrevButton = document.querySelector('.recent-scroll-button.prev');
     const healthNextButton = document.querySelector('.recent-scroll-button.next');
     const healthModal = document.querySelector('.health-modal');
@@ -1706,6 +1766,251 @@
       }
     };
 
+    const limHealthDetail = {
+      heartRate: {
+        weekAvg: '75', monthAvg: '73',
+        series: [72, 74, 73, 75, 76, 74, 78],
+        summary: '이전보다 4회/분 증가했으며, 최근 7일간 소폭 상승했습니다.'
+      },
+      bloodPressure: {
+        weekAvg: '132 / 83', monthAvg: '130 / 82',
+        systolic: [128, 131, 130, 134, 132, 132, 138],
+        diastolic: [80, 82, 81, 83, 84, 82, 86],
+        summary: '이전보다 수축기 혈압이 6mmHg, 이완기 혈압이 4mmHg 증가했습니다.'
+      },
+      fatigue: {
+        weekAvg: '50', monthAvg: '48',
+        series: [45, 47, 49, 50, 53, 51, 57],
+        summary: '이전보다 6점 증가했으며, 최근 7일간 전반적으로 상승했습니다.'
+      },
+      stress: {
+        weekAvg: '57', monthAvg: '55',
+        series: [52, 54, 56, 55, 59, 58, 63],
+        summary: '이전보다 5점 증가했으며, 최근 7일간 상승 추세를 보였습니다.'
+      },
+      recovery: {
+        weekAvg: '67', monthAvg: '69',
+        series: [72, 70, 68, 67, 66, 65, 61],
+        summary: '이전보다 4점 감소했으며, 최근 7일간 완만하게 하락했습니다.'
+      }
+    };
+
+    const limHealthMetricConfig = {
+      bloodPressure: {
+        ...healthMetricConfig.bloodPressure,
+        latest: '138 / 86',
+        status: '주의',
+        statusTone: 'moderate',
+        summaryTitle: '현재 혈압은 설정된 주의 구간에 있습니다.',
+        summaryText: limHealthDetail.bloodPressure.summary,
+        comparison: '↑ +6 / +4',
+        comparisonTone: 'attention',
+        averageWeek: limHealthDetail.bloodPressure.weekAvg,
+        averageMonth: limHealthDetail.bloodPressure.monthAvg,
+        series: [
+          { label: '수축기', color: '#0065ef', values: limHealthDetail.bloodPressure.systolic },
+          { label: '이완기', color: '#94a3b8', values: limHealthDetail.bloodPressure.diastolic }
+        ]
+      },
+      heartRate: {
+        ...healthMetricConfig.heartRate,
+        latest: '78',
+        status: '정상',
+        statusTone: 'normal',
+        summaryTitle: '현재 심박수는 일반적인 안정 시 범위에 있습니다.',
+        summaryText: limHealthDetail.heartRate.summary,
+        comparison: '↑ +4',
+        comparisonTone: 'attention',
+        averageWeek: limHealthDetail.heartRate.weekAvg,
+        averageMonth: limHealthDetail.heartRate.monthAvg,
+        series: [{ label: '심박수', color: '#0065ef', values: limHealthDetail.heartRate.series }]
+      },
+      fatigue: {
+        ...healthMetricConfig.fatigue,
+        latest: '57',
+        status: '주의',
+        statusTone: 'moderate',
+        summaryTitle: '현재 피로도는 주의 수준입니다.',
+        summaryText: limHealthDetail.fatigue.summary,
+        comparison: '↑ +6',
+        comparisonTone: 'attention',
+        averageWeek: limHealthDetail.fatigue.weekAvg,
+        averageMonth: limHealthDetail.fatigue.monthAvg,
+        series: [{ label: '피로도', color: '#f59e0b', values: limHealthDetail.fatigue.series }]
+      },
+      stress: {
+        ...healthMetricConfig.stress,
+        latest: '63',
+        status: '주의',
+        statusTone: 'warning',
+        summaryTitle: '현재 스트레스 점수가 설정된 주의 구간에 있습니다.',
+        summaryText: limHealthDetail.stress.summary,
+        comparison: '↑ +5',
+        comparisonTone: 'attention',
+        averageWeek: limHealthDetail.stress.weekAvg,
+        averageMonth: limHealthDetail.stress.monthAvg,
+        series: [{ label: '스트레스', color: '#ef4444', values: limHealthDetail.stress.series }]
+      },
+      recovery: {
+        ...healthMetricConfig.recovery,
+        latest: '61',
+        status: '주의',
+        statusTone: 'moderate',
+        summaryTitle: '현재 회복력은 설정된 주의 구간에 있습니다.',
+        summaryText: limHealthDetail.recovery.summary,
+        comparison: '↓ -4',
+        comparisonTone: 'attention',
+        averageWeek: limHealthDetail.recovery.weekAvg,
+        averageMonth: limHealthDetail.recovery.monthAvg,
+        series: [{ label: '회복력', color: '#0065ef', values: limHealthDetail.recovery.series }]
+      }
+    };
+
+    const peopleData = {
+      kim: {
+        id: 'kim',
+        name: '김영희',
+        age: 78,
+        gender: '여성',
+        profileSrc: './deepcheck-profile.jpg',
+        profileClass: '',
+        lastMeasured: '2026년 10월 29일 (금) 오후 21:30',
+        currentRoom: 'livingRoom',
+        locationPosition: [15, -5, 55],
+        measurements: {
+          measuredAt: '10월 29일 (금) 오후 10:10',
+          heartRate: { value: 72, status: '정상', change: -4 },
+          bloodPressure: {
+            systolic: 120, diastolic: 80, status: '정상',
+            systolicChange: -6, diastolicChange: 0
+          },
+          fatigue: { value: 35, status: '주의', change: -7 },
+          stress: { value: 50, status: '주의', change: 2 },
+          recovery: { value: 75, status: '정상', change: 5 }
+        },
+        activitySummary: {
+          total: '3시간 40분',
+          mainRoom: '거실',
+          mainDuration: '1시간 20분',
+          rooms: {
+            livingRoom: { minutes: 80, label: '1시간 20분', percent: 37 },
+            bedroom: { minutes: 60, label: '1시간', percent: 27 },
+            kitchen: { minutes: 40, label: '40분', percent: 18 },
+            study: { minutes: 40, label: '40분', percent: 18 }
+          }
+        },
+        activityLog: [
+          ['10:10', '거실 · 활동 감지'],
+          ['09:12', '건강 측정 완료'],
+          ['08:47', '부엌 · 활동 감지'],
+          ['07:30', '침실 · 기상']
+        ],
+        roomEvents: {
+          livingRoom: [
+            ['10:10', '활동 감지 (이동)'],
+            ['09:55', '활동 감지 (앉음)'],
+            ['09:32', '활동 감지 (이동)'],
+            ['09:18', '거실 진입']
+          ],
+          bedroom: [
+            ['07:45', '침실 이탈'],
+            ['07:30', '기상 활동 감지'],
+            ['07:27', '활동 감지 (이동)'],
+            ['07:20', '움직임 감지']
+          ],
+          kitchen: [
+            ['09:03', '부엌 이탈'],
+            ['08:55', '활동 감지 (이동)'],
+            ['08:47', '활동 감지 (이동)'],
+            ['08:38', '부엌 진입']
+          ],
+          study: [
+            ['08:31', '서재 이탈'],
+            ['08:20', '활동 감지 (앉음)'],
+            ['08:08', '활동 감지 (이동)'],
+            ['07:50', '서재 진입']
+          ]
+        },
+        healthDetails: healthMetricConfig
+      },
+      lim: {
+        id: 'lim',
+        name: '임정철',
+        age: 80,
+        gender: '남성',
+        profileSrc: './deepcheck-lim-profile.svg#svgView(viewBox(71,70,88,88))',
+        profileClass: '',
+        lastMeasured: '2026년 10월 29일 (목) 오후 20:10',
+        currentRoom: 'bedroom',
+        locationPosition: [220, -5, 60],
+        measurements: {
+          measuredAt: '10월 29일 (목) 오후 8:10',
+          heartRate: { value: 78, status: '정상', change: 4 },
+          bloodPressure: {
+            systolic: 138, diastolic: 86, status: '주의',
+            systolicChange: 6, diastolicChange: 4
+          },
+          fatigue: { value: 57, status: '주의', change: 6 },
+          stress: { value: 63, status: '주의', change: 5 },
+          recovery: { value: 61, status: '주의', change: -4 }
+        },
+        activitySummary: {
+          total: '4시간',
+          mainRoom: '침실',
+          mainDuration: '1시간 36분',
+          rooms: {
+            livingRoom: { minutes: 72, label: '1시간 12분', percent: 30 },
+            bedroom: { minutes: 96, label: '1시간 36분', percent: 40 },
+            kitchen: { minutes: 48, label: '48분', percent: 20 },
+            study: { minutes: 24, label: '24분', percent: 10 }
+          }
+        },
+        activityLog: [
+          ['20:35', '침실 · 활동 감지'],
+          ['20:10', '건강 측정 완료'],
+          ['19:40', '거실 · 활동 감지'],
+          ['19:05', '부엌 · 활동 감지']
+        ],
+        roomEvents: {
+          livingRoom: [
+            ['19:58', '거실 이탈'],
+            ['19:40', '활동 감지 (이동)'],
+            ['19:25', '활동 감지 (앉음)'],
+            ['19:12', '거실 진입']
+          ],
+          bedroom: [
+            ['20:35', '활동 감지 (이동)'],
+            ['20:28', '활동 감지 (앉음)'],
+            ['20:15', '움직임 감지'],
+            ['20:02', '침실 진입']
+          ],
+          kitchen: [
+            ['19:08', '부엌 이탈'],
+            ['19:05', '활동 감지 (이동)'],
+            ['18:55', '활동 감지 (이동)'],
+            ['18:42', '부엌 진입']
+          ],
+          study: [
+            ['18:35', '서재 이탈'],
+            ['18:20', '활동 감지 (앉음)'],
+            ['18:12', '활동 감지 (이동)'],
+            ['18:05', '서재 진입']
+          ]
+        },
+        healthDetails: limHealthMetricConfig
+      }
+    };
+
+    let selectedPersonId = 'kim';
+
+    function getSelectedPerson() {
+      return peopleData[selectedPersonId];
+    }
+
+    function getSelectedHealthConfig(metricKey) {
+      return getSelectedPerson().healthDetails[metricKey];
+    }
+
     const svgNamespace = 'http://www.w3.org/2000/svg';
     let lastHealthCard = null;
 
@@ -1718,7 +2023,7 @@
     }
 
     function drawHealthChart(metricKey) {
-      const config = healthMetricConfig[metricKey];
+      const config = getSelectedHealthConfig(metricKey);
       const allValues = config.series.flatMap((series) => series.values);
       const range = Math.max(...allValues) - Math.min(...allValues);
       const padding = Math.max(4, range * .18);
@@ -1809,7 +2114,7 @@
     }
 
     function renderHealthMetric(metricKey) {
-      const config = healthMetricConfig[metricKey];
+      const config = getSelectedHealthConfig(metricKey);
       if (!config) return;
 
       healthTitle.textContent = config.label;
@@ -1856,9 +2161,124 @@
       healthModalClose.focus({ preventScroll: true });
     }
 
-    function closeHealthModal() {
+    function closeHealthModal(restoreFocus = true) {
       healthModal.hidden = true;
-      lastHealthCard?.focus({ preventScroll: true });
+      if (restoreFocus) lastHealthCard?.focus({ preventScroll: true });
+    }
+
+    const roomNames = {
+      livingRoom: '거실',
+      bedroom: '침실',
+      kitchen: '부엌',
+      study: '서재'
+    };
+    const roomOrder = ['livingRoom', 'bedroom', 'kitchen', 'study'];
+    const walkingIconMarkup = '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="4" r="2" fill="currentColor"/><path d="m10.5 7-2 5h2l-1 7M13 7l1.5 4 3 2M12 12v7M8.5 9l-2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const heartIconMarkup = '<svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.6c0 5-8.8 10-8.8 10s-8.8-5-8.8-10a4.6 4.6 0 0 1 8.8-1.9 4.6 4.6 0 0 1 8.8 1.9Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const bedIconMarkup = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 7v12M4 10h14a2 2 0 0 1 2 2v7M4 16h16M7 10V7h4a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function formatSignedValue(value) {
+      return value > 0 ? `+${value}` : String(value);
+    }
+
+    function isMetricChangeAttention(metricKey, value) {
+      if (value === 0) return false;
+      return metricKey === 'recovery' ? value < 0 : value > 0;
+    }
+
+    function renderMeasurementCard(card, metricKey, measurement) {
+      const badge = card.querySelector('.badge');
+      const value = card.querySelector('.metric-value');
+      const foot = card.querySelector('.metric-foot');
+      const isStress = metricKey === 'stress';
+
+      badge.textContent = measurement.status;
+      badge.className = `badge${measurement.status === '정상' ? '' : isStress ? ' danger' : ' warning'}`;
+      value.replaceChildren();
+
+      if (metricKey === 'bloodPressure') {
+        value.textContent = `${measurement.systolic}/${measurement.diastolic}`;
+        foot.textContent = `수축기 ${formatSignedValue(measurement.systolicChange)} · 이완기 ${formatSignedValue(measurement.diastolicChange)}`;
+        foot.className = `metric-foot${measurement.systolicChange > 0 || measurement.diastolicChange > 0 ? ' attention' : ''}`;
+        return;
+      }
+
+      value.append(document.createTextNode(String(measurement.value)));
+      const unit = document.createElement('small');
+      unit.textContent = metricKey === 'heartRate' ? '회/분' : '/100점';
+      value.appendChild(unit);
+
+      foot.className = 'metric-foot';
+      foot.textContent = '이전 대비 ';
+      const change = document.createElement('b');
+      change.textContent = formatSignedValue(measurement.change);
+      if (isMetricChangeAttention(metricKey, measurement.change)) change.className = 'danger';
+      foot.appendChild(change);
+    }
+
+    function renderActivitySummary(person) {
+      const summary = person.activitySummary;
+      summaryValues[0].textContent = summary.total;
+      summaryValues[1].textContent = `${summary.mainRoom}(${summary.mainDuration})`;
+
+      roomOrder.forEach((roomKey, index) => {
+        const room = summary.rooms[roomKey];
+        activityBarSegments[index].style.width = `${room.percent}%`;
+        activityBarSegments[index].style.flex = 'none';
+
+        const dot = activityLegendItems[index].querySelector('.legend-dot');
+        activityLegendItems[index].replaceChildren(
+          dot,
+          document.createTextNode(`${roomNames[roomKey]} ${room.percent}%`)
+        );
+      });
+    }
+
+    function renderActivityLog(person) {
+      person.activityLog.forEach(([timeValue, label], index) => {
+        const row = activityTimelineRows[index];
+        const event = row.querySelector('.timeline-event');
+        const icon = event.querySelector('.event-icon');
+        const labelElement = Array.from(event.children).find((child) =>
+          child.tagName === 'SPAN' &&
+          !child.classList.contains('event-icon') &&
+          !child.classList.contains('now-pill')
+        );
+
+        row.querySelector('.timeline-time').textContent = timeValue;
+        labelElement.textContent = label;
+        icon.className = `event-icon${label.includes('건강 측정') ? ' heart' : ''}`;
+        icon.innerHTML = label.includes('건강 측정')
+          ? heartIconMarkup
+          : label.includes('기상')
+            ? bedIconMarkup
+            : walkingIconMarkup;
+      });
+    }
+
+    function renderPersonDashboard() {
+      const person = getSelectedPerson();
+
+      profileImage.src = person.profileSrc;
+      profileImage.alt = `${person.name} 프로필`;
+      profileImage.className = person.profileClass;
+      profileName.textContent = `${person.name} 님`;
+      profileMeta.textContent = `${person.age}세 · ${person.gender}`;
+      lastMeasurementValue.textContent = person.lastMeasured;
+      measurementDate.textContent = `${person.measurements.measuredAt} 기준`;
+      locationTooltipText.textContent = `${roomNames[person.currentRoom]} · 활동 감지`;
+      currentLocationPosition.fromArray(person.locationPosition);
+
+      healthMetricCards.forEach((card) => {
+        const metricKey = card.dataset.healthMetric;
+        renderMeasurementCard(card, metricKey, person.measurements[metricKey]);
+      });
+
+      renderActivitySummary(person);
+      renderActivityLog(person);
+
+      healthGrid.scrollLeft = 0;
+      requestAnimationFrame(updateHealthScrollButtons);
     }
 
     healthMetricCards.forEach((card) => {
@@ -2010,7 +2430,7 @@ window.getCameraView = () => {
       50.31645690779028
     );
 
-    const livingRoomPosition = new THREE.Vector3(
+    const currentLocationPosition = new THREE.Vector3(
       15,
       -5,
       55
@@ -2062,56 +2482,6 @@ const roomBoundaries = {
     [54, 12]
   ]
 };
-
-    const roomInfo = {
-      livingRoom: { name: '거실', activity: '활동 시간 1시간 20분 (37%)' },
-      bedroom: { name: '침실', activity: '활동 시간 1시간 (27%)' },
-      kitchen: { name: '부엌', activity: '활동 시간 40분 (18%)' },
-      study: { name: '서재', activity: '활동 시간 40분 (18%)' }
-    };
-
-    const roomActivityData = {
-      livingRoom: {
-        name: '거실', durationMinutes: 80,
-        durationLabel: '1시간 20분', percentage: 37,
-        events: [
-          { time: '10:10', label: '활동 감지 (이동)' },
-          { time: '09:55', label: '활동 감지 (앉음)' },
-          { time: '09:32', label: '활동 감지 (이동)' },
-          { time: '09:18', label: '거실 진입' }
-        ]
-      },
-      bedroom: {
-        name: '침실', durationMinutes: 60,
-        durationLabel: '1시간', percentage: 27,
-        events: [
-          { time: '07:45', label: '침실 이탈' },
-          { time: '07:30', label: '기상 활동 감지' },
-          { time: '07:27', label: '활동 감지 (이동)' },
-          { time: '07:20', label: '움직임 감지' }
-        ]
-      },
-      kitchen: {
-        name: '부엌', durationMinutes: 40,
-        durationLabel: '40분', percentage: 18,
-        events: [
-          { time: '09:03', label: '부엌 이탈' },
-          { time: '08:55', label: '활동 감지 (이동)' },
-          { time: '08:47', label: '활동 감지 (이동)' },
-          { time: '08:38', label: '부엌 진입' }
-        ]
-      },
-      study: {
-        name: '서재', durationMinutes: 40,
-        durationLabel: '40분', percentage: 18,
-        events: [
-          { time: '08:31', label: '서재 이탈' },
-          { time: '08:20', label: '활동 감지 (앉음)' },
-          { time: '08:08', label: '활동 감지 (이동)' },
-          { time: '07:50', label: '서재 진입' }
-        ]
-      }
-    };
 
     const roomCameraViews = {
       kitchen: {
@@ -2561,36 +2931,45 @@ const roomBoundaries = {
     }
 
     function showActivityLogView() {
+      timelineCard.classList.remove('analysis-highlight');
       roomAnalysisView.hidden = true;
       activityLogView.hidden = false;
     }
 
+    function highlightActivityAnalysisCard() {
+      timelineCard.classList.remove('analysis-highlight');
+      void timelineCard.offsetWidth;
+      timelineCard.classList.add('analysis-highlight');
+    }
+
     function showRoomActivityAnalysis(roomKey) {
-      const data = roomActivityData[roomKey];
-      if (!data) {
+      const person = getSelectedPerson();
+      const room = person.activitySummary.rooms[roomKey];
+      const events = person.roomEvents[roomKey];
+      if (!room || !events) {
         showActivityLogView();
         return;
       }
 
-      analysisHeading.textContent = `${data.name} 활동 분석`;
-      analysisDuration.textContent = data.durationLabel;
-      analysisPercentage.textContent = `${data.percentage}%`;
+      analysisHeading.textContent = `${roomNames[roomKey]} 활동 분석`;
+      analysisDuration.textContent = room.label;
+      analysisPercentage.textContent = `${room.percent}%`;
       analysisTimeline.replaceChildren();
 
-      data.events.forEach((eventData) => {
+      events.forEach(([timeValue, eventLabel]) => {
         const row = document.createElement('div');
         row.className = 'analysis-event-row';
 
         const time = document.createElement('time');
         time.className = 'analysis-event-time';
-        time.textContent = eventData.time;
+        time.textContent = timeValue;
 
         const node = document.createElement('i');
         node.className = 'analysis-event-node';
 
         const label = document.createElement('div');
         label.className = 'analysis-event-label';
-        label.textContent = eventData.label;
+        label.textContent = eventLabel;
 
         row.append(time, node, label);
         analysisTimeline.appendChild(row);
@@ -2598,7 +2977,14 @@ const roomBoundaries = {
 
       activityLogView.hidden = true;
       roomAnalysisView.hidden = false;
+      highlightActivityAnalysisCard();
     }
+
+    timelineCard.addEventListener('animationend', (event) => {
+      if (event.animationName === 'activity-analysis-card-highlight') {
+        timelineCard.classList.remove('analysis-highlight');
+      }
+    });
 
     function restoreFullActivityLog() {
       selectedRoomKey = null;
@@ -2630,8 +3016,9 @@ const roomBoundaries = {
         return;
       }
 
-      roomTooltipName.textContent = roomInfo[activeRoomKey].name;
-      roomTooltipActivity.textContent = roomInfo[activeRoomKey].activity;
+      const room = getSelectedPerson().activitySummary.rooms[activeRoomKey];
+      roomTooltipName.textContent = roomNames[activeRoomKey];
+      roomTooltipActivity.textContent = `활동 시간 ${room.label} (${room.percent}%)`;
       roomTooltip.hidden = false;
     }
 
@@ -2690,6 +3077,77 @@ const roomBoundaries = {
     }
 
     analysisReturnButton.addEventListener('click', restoreFullActivityLog);
+
+    function selectPerson(personId) {
+      if (!peopleData[personId]) return;
+      if (personId === selectedPersonId) return;
+
+      selectedPersonId = personId;
+      selectedRoomKey = null;
+      hoveredRoomKey = null;
+      roomPointerStart = null;
+      roomPointerDragged = false;
+      renderer.domElement.style.cursor = '';
+      if (!healthModal.hidden) closeHealthModal(false);
+      lastHealthCard = null;
+      updateRoomVisualState();
+      showActivityLogView();
+      renderPersonDashboard();
+
+      if (currentViewMode === '3d') {
+        stopCameraAnimation();
+        controls.enableRotate = initialControlState.enableRotate;
+        controls.enableZoom = initialControlState.enableZoom;
+        controls.enablePan = initialControlState.enablePan;
+        controls.maxPolarAngle = initialControlState.maxPolarAngle;
+        controls.mouseButtons = { ...initialControlState.mouseButtons };
+        controls.touches = { ...initialControlState.touches };
+        runViewControlTransition(() => ({
+          position: initialCameraPosition.clone(),
+          target: initialCameraTarget.clone()
+        }));
+      }
+    }
+
+    let isPersonTransitioning = false;
+
+    function waitForPersonTransition(duration) {
+      return new Promise((resolve) => setTimeout(resolve, duration));
+    }
+
+    function waitForNextFrame() {
+      return new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+
+    async function transitionPerson(personId) {
+      if (
+        isPersonTransitioning ||
+        !peopleData[personId] ||
+        personId === selectedPersonId
+      ) return;
+
+      isPersonTransitioning = true;
+      personSelectButton.classList.add('is-transitioning');
+      personSelectButton.setAttribute('aria-busy', 'true');
+      personTransitionCards.forEach((card) => card.classList.add('person-transition-out'));
+
+      try {
+        await waitForPersonTransition(200);
+        selectPerson(personId);
+        await waitForNextFrame();
+        personTransitionCards.forEach((card) => card.classList.remove('person-transition-out'));
+        await waitForPersonTransition(200);
+      } finally {
+        personTransitionCards.forEach((card) => card.classList.remove('person-transition-out'));
+        personSelectButton.classList.remove('is-transitioning');
+        personSelectButton.removeAttribute('aria-busy');
+        isPersonTransitioning = false;
+      }
+    }
+
+    personSelectButton.addEventListener('click', () => {
+      transitionPerson(selectedPersonId === 'kim' ? 'lim' : 'kim');
+    });
 
     function addFloorDebugMarker(position) {
       const marker = new THREE.Mesh(
@@ -2782,10 +3240,11 @@ const roomBoundaries = {
     healthNextButton.addEventListener('click', () => scrollHealthGrid(1));
     healthGrid.addEventListener('scroll', updateHealthScrollButtons, { passive: true });
     requestAnimationFrame(updateHealthScrollButtons);
+    renderPersonDashboard();
 
     function updateLocationOverlay() {
       camera.updateMatrixWorld();
-      projectedLocation.copy(livingRoomPosition).project(camera);
+      projectedLocation.copy(currentLocationPosition).project(camera);
 
       const dashboardRect = dashboard.getBoundingClientRect();
       const viewportX = (projectedLocation.x * 0.5 + 0.5) * window.innerWidth;
